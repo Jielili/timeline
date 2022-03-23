@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment-with-locales.min.js"
+    integrity="sha512-LGXaggshOkD/at6PFNcp2V2unf9LzFq6LE+sChH7ceMTDP0g2kn6Vxwgg7wkPP7AAtX+lmPqPdxB47A0Nz0cMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="optimize.js"></script>
+  <title>时间轴</title>
+</head>
+
+<body>
+  <div id="app">
+    <!-- <div class="timeline" v-bind:style="{translateX: translateX + 'px'}"> -->
+    <div class="timeline-container">
+      <div class="timeline">
+        <div :style="{ transform: 'translate(' + translateX + 'px)' }">
+          <div class="months">
+            <div v-for="month in months" :style="{ left: month.diff(startTime19700101, 'd') * dayWidth + 'px'}"
+              class="month-item">
+              <div class="month-item-content">{{month.format('M')}}</div>
+            </div>
+          </div>
+          <div class="days">
+            <div v-for="day in days" :style="{ left: day.diff(startTime19700101, 'd') * dayWidth +'px'}"
+              :class="{'day-item':true, weekend:day.format('d') == 5 || day.format('d') == 6}">{{day.format('D')}}
+            </div> 
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+  const width = 45, startTime19700101 = moment([1970, 1, 1]);
+  var app = new Vue({
+    el: '#app',
+    data() {
+      return {
+        dayWidth: width,
+        thisDay: moment().startOf('day'),
+        totalDays: 0,
+        totalMonth: 0,
+        left: 0,
+        originClientX: 0,
+        translateX: startTime19700101.diff(this.thisDay, 'days') * width
+      }
+    },
+    created() {
+      const debounceFn = debounce(this.reiszeHandler, 250)
+      const throttleFn = throttle(this.reiszeHandler, 250)
+      console.log('created')
+      window.onresize = () => {
+        debounceFn()
+        throttleFn()
+      }
+    },
+    mounted() {
+      const theWholeWidth = this.$el.querySelector('.timeline').clientWidth
+      console.log(theWholeWidth)
+      this.left = theWholeWidth / 2 - width / 2
+      this.translateX = startTime19700101.diff(this.thisDay, 'days') * width + this.left
+      this.reiszeHandler()
+      this.$el.querySelector('.timeline').addEventListener('mousedown', this.mousedownHandler)
+      this.$el.querySelector('.timeline-container').onwheel = this.scrollHandler
+    },
+    beforeDestory() {
+      this.$el.querySelector('.timeline').removeEventListener('mousedown', this.mousedownHandler)
+    },
+    methods: {
+      reiszeHandler() {
+        console.log('resize')
+        const theWholeWidth = this.$el.querySelector('.timeline').clientWidth
+        console.log(theWholeWidth)
+        this.totalDays = Math.ceil(theWholeWidth / width) + 1
+        this.totalMonth = Math.ceil(theWholeWidth / (width * 28)) + 1
+        console.log(this.totalDays)
+      },
+      scrollHandler(e) {
+        this.translateX -= e.deltaX
+      },
+      mousemoveHandler(e) {
+        const clientX = e.clientX
+        const moveDistance = clientX - this.originClientX
+        this.translateX += moveDistance
+        this.originClientX = clientX
+      },
+      mousedownHandler(e) {
+        this.originClientX = e.clientX;
+        document.addEventListener('mousemove', this.mousemoveHandler)
+        document.addEventListener('mouseup', () => {
+          document.removeEventListener('mousemove', this.mousemoveHandler)
+        })
+      }
+    },
+    computed: {
+      startDay() {
+        return startTime19700101.clone().add(Math.floor(-this.translateX / width), 'd')
+      },
+      days() {
+        const res = []
+        for (let i = 0; i < this.totalDays; i++) {
+          const day = this.startDay.clone().add(i, 'd')
+          res.push(day)
+        }
+        return res
+      },
+      months() {
+        const res = []
+        for (let i = 0; i < this.totalMonth; i++) {
+          const month = this.startDay.clone().startOf('month').add(i, 'M')
+          res.push(month)
+        }
+        return res
+      }
+    }
+  })
+</script>
+
+</html>
+<style>
+  html,
+  body,
+  #app {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    color: #2a2a2a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Noto Sans", "Noto Sans CJK SC", "Microsoft YaHei", 微软雅黑, sans-serif;
+  }
+
+  .timeline-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .timeline {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    cursor: ew-resize;
+    user-select: none;
+  }
+
+  .months,
+  .days {
+    height: 24px;
+  }
+
+  .month-item-content {
+    position: sticky;
+    left: 12px;
+    position: -webkit-sticky;
+  }
+
+  .day-item {
+    position: absolute;
+    width: 45px;
+    text-align: center;
+  }
+
+  .month-item {
+    position: absolute;
+    padding-left: 13px;
+  }
+
+  .weekend {
+    color: #8c8c8c;
+  }
+</style>
