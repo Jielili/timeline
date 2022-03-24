@@ -82,6 +82,7 @@
         console.log(this.totalDays)
       },
       scrollHandler(e) {
+        e.preventDefault()
         this.translateX -= e.deltaX
       },
       mousemoveHandler(e) {
