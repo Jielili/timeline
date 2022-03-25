@@ -78,7 +78,6 @@
     created() {
       const debounceFn = debounce(this.reiszeHandler, 250)
       const throttleFn = throttle(this.reiszeHandler, 250)
-      console.log('created')
       window.onresize = () => {
         debounceFn()
         throttleFn()
@@ -86,7 +85,6 @@
     },
     mounted() {
       const theWholeWidth = this.$el.querySelector('.timeline').clientWidth
-      console.log(theWholeWidth)
       this.left = theWholeWidth / 2 - width / 2
       this.translateX = startTime19700101.diff(this.thisDay, 'days') * width + this.left
       this.reiszeHandler()
@@ -98,12 +96,9 @@
     },
     methods: {
       reiszeHandler() {
-        console.log('resize')
         const theWholeWidth = this.$el.querySelector('.timeline').clientWidth
-        console.log(theWholeWidth)
         this.totalDays = Math.ceil(theWholeWidth / width) + 1
         this.totalMonth = Math.ceil(theWholeWidth / (width * 28)) + 1
-        console.log(this.totalDays)
       },
       scrollHandler(e) {
         e.preventDefault()
