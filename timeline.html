@@ -10,7 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment-with-locales.min.js"
     integrity="sha512-LGXaggshOkD/at6PFNcp2V2unf9LzFq6LE+sChH7ceMTDP0g2kn6Vxwgg7wkPP7AAtX+lmPqPdxB47A0Nz0cMQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="optimize.js"></script>
+  <!-- <script src="optimize.js"></script> -->
   <title>时间轴</title>
 </head>
 
@@ -21,14 +21,16 @@
       <div class="timeline">
         <div :style="{ transform: 'translate(' + translateX + 'px)' }">
           <div class="months">
-            <div v-for="(month,i) in months" :style="{ left: i==0?(-translateX+'px'):(month.diff(startTime19700101, 'd') * dayWidth + 'px')}"
+            <div v-for="(month,i) in months"
+              :style="{ left: i==0?(-translateX+'px'):(month.diff(startTime19700101, 'd') * dayWidth + 'px')}"
               class="month-item">
-              {{month.format('M')}}月
+              {{month.format('M')==1?month.format('YYYY')+'年':''}}{{month.format('M')}}月
             </div>
           </div>
           <div class="days">
             <div v-for="day in days" :style="{ left: day.diff(startTime19700101, 'd') * dayWidth +'px'}"
-              :class="{ today:day.diff(thisDay, 'd')==0, 'day-item':true, weekend:day.format('d') == 5 || day.format('d') == 6}">{{day.format('D')}}
+              :class="{ today:day.diff(thisDay, 'd')==0, 'day-item':true, weekend:day.format('d') == 5 || day.format('d') == 6}">
+              {{day.format('D')}}
             </div> 
           </div>
         </div>
@@ -38,12 +40,34 @@
 </body>
 <script>
   const width = 45, startTime19700101 = moment([1970, 1, 1]);
+  function debounce(fn, delay) {
+    let timer
+    return (...args) => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+      timer = setTimeout(() => {
+        fn.apply(this, args)
+      }, delay)
+    }
+  }
+
+  function throttle(fn, delay) {
+    let pre = 0
+    return (...args) => {
+      const now = new Date()
+      if (now - pre > delay) {
+        fn.apply(this, args)
+        pre = now
+      }
+    }
+  }
   var app = new Vue({
     el: '#app',
     data() {
       return {
         dayWidth: width,
-        thisDay: moment().startOf('day'),
+        thisDay: moment('1970-05-05').startOf('day'),
         totalDays: 0,
         totalMonth: 0,
         left: 0,
@@ -148,6 +172,7 @@
     cursor: ew-resize;
     user-select: none;
     padding: 4px 0;
+    border-bottom: 1px solid #e5e5e5;
   }
 
   .months,
@@ -171,7 +196,7 @@
   .month-item {
     position: absolute;
     padding-left: 13px;
-    width: 40px;
+    width: 100px;
     background-color: white;
   }
 
